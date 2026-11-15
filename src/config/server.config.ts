@@ -7,5 +7,5 @@ interface IserveConfig{
 }
 
 export const serverConfig:IserveConfig={
-    PORT:Number(process.env.PORT)
+    PORT:Number(process.env.PORT),
 }
