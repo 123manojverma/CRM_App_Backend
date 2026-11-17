@@ -5,6 +5,8 @@ import type { User } from "../generated/prisma/client.js";
 import type UserRepository from "../repositories/user.repository.js";
 import bcrypt from "bcrypt";
 import { generateJWT } from "../utils/auth.utils.js";
+import NotFoundError from "../errors/notFound.js";
+import UnauthorizedError from "../errors/unauthorizedError.js";
 
 class UserService {
     private userRepository: UserRepository;
@@ -51,11 +53,11 @@ class UserService {
         try {
             const user=await this.userRepository.getUserByEmail(signInDetail.email);
             if(!user){
-                throw {err:"not found"};
+                throw new NotFoundError('User','email',signInDetail.email);
             }
             const doesPasswordMatch=bcrypt.compareSync(signInDetail.password,user.password);
             if(!doesPasswordMatch){
-                throw {err:"Wrong Password"};
+                throw new UnauthorizedError();
             }
             const jwt=generateJWT({id:user.id,email:user.email,role:user.roles});
             return jwt;

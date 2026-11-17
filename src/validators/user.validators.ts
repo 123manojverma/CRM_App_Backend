@@ -2,6 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import CreateUserDto from "../dtos/createUser.dto.js";
 import { validate } from "class-validator";
 import SignInDto from "../dtos/signin.dto.js";
+import { StatusCodes } from "http-status-codes";
+import BadRequestError from "../errors/badRequest.js";
 
 export async function createUserValidator(req:Request,res:Response,next:NextFunction){
     const incomingRequestBody:CreateUserDto=new CreateUserDto(req.body.email,req.body.password,req.body.name);
@@ -14,8 +16,8 @@ export async function createUserValidator(req:Request,res:Response,next:NextFunc
                 constraints:err.constraints
             }
         })
-        return res.status(400).json({
-            err:errorResponse,
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            err:new BadRequestError(errorResponse),
             data:{},
             success:false,
             message:'Invalid parameters sent in the request'
@@ -35,8 +37,8 @@ export async function signinUserValidator(req:Request,res:Response,next:NextFunc
                 constraints:err.constraints
             }
         })
-        return res.status(400).json({
-            err:errorResponse,
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            err:new BadRequestError(errorResponse),
             data:{},
             success:false,
             message:'Invalid parameters sent in the request'
