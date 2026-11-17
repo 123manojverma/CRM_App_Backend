@@ -35,6 +35,15 @@ class UserRepository{
     async update(){
 
     }
+
+    async getUserByEmail(userEmail:string):Promise<User | null>{
+        const user=await prisma.user.findUnique({
+            where:{
+                email:userEmail
+            }
+        })
+        return user;
+    }
 }
 
 export default UserRepository;
