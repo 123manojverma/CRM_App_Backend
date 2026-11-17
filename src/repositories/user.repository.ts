@@ -1,9 +1,17 @@
+import type CreateUserDto from "../dtos/createUser.dto.js";
 import type { User } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 
 class UserRepository{
-    async create(){
-
+    async create(userDetails:CreateUserDto){
+        const user=await prisma.user.create({
+            data:{
+                name:userDetails.name,
+                email:userDetails.email,
+                password:userDetails.password
+            }
+        })
+        return user;
     }
 
     async get(userId:string):Promise<User | null>{
