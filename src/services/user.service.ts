@@ -1,6 +1,8 @@
+import { serverConfig } from "../config/server.config.js";
 import type CreateUserDto from "../dtos/createUser.dto.js";
 import type { User } from "../generated/prisma/client.js";
 import type UserRepository from "../repositories/user.repository.js";
+import bcrypt from "bcrypt";
 
 class UserService {
     private userRepository: UserRepository;
@@ -33,6 +35,8 @@ class UserService {
 
     async create(userDetails:CreateUserDto):Promise<User>{
         try {
+            const salt=bcrypt.genSaltSync(serverConfig.SALT_ROUNDS);
+            userDetails.password=bcrypt.hashSync(userDetails.password,salt);
             const response: User = await this.userRepository.create(userDetails);
             return response;
         } catch (error) {
