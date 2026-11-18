@@ -3,7 +3,7 @@ import type { User } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 
 class UserRepository{
-    async create(userDetails:CreateUserDto){
+    async create(userDetails:CreateUserDto):Promise<User>{
         const user=await prisma.user.create({
             data:{
                 name:userDetails.name,
