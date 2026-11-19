@@ -3,6 +3,7 @@ import NotFoundError from "../errors/notFound.js";
 import type { Ticket, User } from "../generated/prisma/client.js";
 import type TicketRepository from "../repositories/ticket.repository.js";
 import type UserRepository from "../repositories/user.repository.js";
+import type Engineer from "../types/engineer.js";
 
 export default class TicketService{
     private ticketRepository:TicketRepository;
@@ -33,14 +34,16 @@ export default class TicketService{
         }
     }
 
-    async getEngineerToAllocateTicket():Promise<User>{
+    async getEngineerToAllocateTicket():Promise<Engineer>{
         try {
-            const engineers=await this.userRepository.getEngineers();
-            engineers.sort((engineer1,engineer2)=>engineer1.ticketsAssigned.length-engineer2.ticketsAssigned.length);
-            const engineer=engineers[0];
-            if(!engineer){
-                throw new Error("No engineers are available to allocate the ticket");
-            }
+            // const engineers=await this.userRepository.getEngineers();
+            // engineers.sort((engineer1,engineer2)=>engineer1.ticketsAssigned.length-engineer2.ticketsAssigned.length);
+            // const engineer=engineers[0];
+            // if(!engineer){
+            //     throw new Error("No engineers are available to allocate the ticket");
+            // }
+            
+            const engineer=await this.userRepository.getAvailableEngineer();
             return engineer;
         } catch (error) {
             console.log(error);

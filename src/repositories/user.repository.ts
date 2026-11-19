@@ -1,6 +1,9 @@
+import type { JsonObject } from "@prisma/client/runtime/library";
 import type CreateUserDto from "../dtos/createUser.dto.js";
+import NotFoundError from "../errors/notFound.js";
 import type { User } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
+import type Engineer from "../types/engineer.js";
 
 class UserRepository {
     async create(userDetails: CreateUserDto): Promise<User> {
@@ -32,7 +35,7 @@ class UserRepository {
 
     }
 
-    async addCreatedTicket(id: string, ticketId: string):Promise<User> {
+    async addCreatedTicket(id: string, ticketId: string): Promise<User> {
         const user = await prisma.user.update({
             where: {
                 id
@@ -46,12 +49,12 @@ class UserRepository {
         return user;
     }
 
-    async addAssignedTicket(id: string, ticketId: string):Promise<User> {
+    async addAssignedTicket(id: string, ticketId: string): Promise<User> {
         const user = await prisma.user.update({
             where: {
                 id,
-                roles:{
-                    has:"ENGINEER"
+                roles: {
+                    has: "ENGINEER"
                 }
             },
             data: {
@@ -73,15 +76,66 @@ class UserRepository {
     }
 
     async getEngineers(): Promise<User[]> {
-        const users = await prisma.user.findMany({
+        const engineers = await prisma.user.findMany({
             where: {
                 roles: {
                     has: "ENGINEER"
                 }
             }
         })
-        return users;
+        return engineers;
     }
+
+    async getAvailableEngineer() : Promise<Engineer> {
+        const response = await prisma.user.aggregateRaw({
+            pipeline: [
+                {
+                    $match: {
+                        "roles": {
+                            "$in": ["ENGINEER"]
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        id: 1,
+                        email: 1,
+                        ticketsAssignedCount: { 
+                            $cond: {
+                                if: { $isArray: "$ticketsAssigned" },
+                                then: { $size: "$ticketsAssigned" },
+                                else: 0
+                            }
+                         } // include a new field in every doc
+                    }
+                },
+                {
+                    $sort: {
+                        ticketsAssignedCount: 1 // sorting the documents
+                    }
+                },
+                {
+                    $limit: 1 // limit to the first doc
+                }
+            ]
+        });
+        console.log(response);
+
+        console.log(typeof response[0] === 'object', (response[0] as JsonObject)._id, (response[0] as JsonObject).email, (response[0] as JsonObject).ticketsAssignedCount)
+        if(typeof response[0] === 'object' && (response[0] as JsonObject)._id && (response[0] as JsonObject).email && (response[0] as JsonObject).ticketsAssignedCount) {
+            const idObject = ((response[0] as JsonObject)._id as {'$oid': string});
+            // _id: {'$oid' : 'asdfa' }
+            const engineer: Engineer = {
+                id: idObject['$oid'],
+                email: (response[0] as JsonObject).email as string,
+                ticketsAssignedCount: (response[0] as JsonObject).ticketsAssignedCount as number
+            };
+            console.log(engineer);
+            return engineer;
+        }
+        throw new NotFoundError("User", "role", "Engineer");
+    }
+
 }
 
 export default UserRepository;
