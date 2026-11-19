@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from "class-validator";
 
 export default class CreateTicketDto {
 
@@ -12,30 +12,11 @@ export default class CreateTicketDto {
 
     @IsNotEmpty()
     @IsString()
-    @IsEmail()
-    assignee: string;
-
-    @IsNotEmpty()
-    @IsString()
-    @IsEmail()
-    assignedTo: string;
-
-    @IsNotEmpty()
-    @IsString()
-    @IsEmail()
-    createdBy: string;
-
-    @IsNotEmpty()
-    @IsString()
-    @IsEmail()
     clientName: string;
 
-    constructor(title: string, description: string, assignee: string,assignedTo:string,createdBy:string,clientName:string) {
+    constructor(title: string, description: string, clientName:string) {
         this.title = title;
         this.description = description;
-        this.assignee = assignee;
-        this.assignedTo = assignedTo;
-        this.createdBy = createdBy;
         this.clientName = clientName;
     }
 }
