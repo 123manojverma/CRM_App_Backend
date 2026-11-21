@@ -1,6 +1,9 @@
 import type CreateTicketDto from "../dtos/createTicket.dto.js";
+import type UpdateTicketDto from "../dtos/updateTicket.dto.js";
+import BadRequestError from "../errors/badRequest.js";
+import InternalServerError from "../errors/internalServerError.js";
 import NotFoundError from "../errors/notFound.js";
-import type { Ticket, User } from "../generated/prisma/client.js";
+import type { Prisma, Ticket, User } from "../generated/prisma/client.js";
 import type TicketRepository from "../repositories/ticket.repository.js";
 import type UserRepository from "../repositories/user.repository.js";
 import type Engineer from "../types/engineer.js";
@@ -12,6 +15,29 @@ export default class TicketService{
     constructor(ticketRepository:TicketRepository,userRepository:UserRepository){
         this.ticketRepository=ticketRepository;
         this.userRepository=userRepository;
+    }
+
+    async updateTicket(ticketId:string,ticketDetails:UpdateTicketDto,userEmail:string){
+        try {
+            const areWeUpdatingAssignedTo=ticketDetails.assignedTo!==undefined;
+            /**
+             * We want to make sure assignedTo always has an email of an admin or an engineer
+             */
+            if(areWeUpdatingAssignedTo){
+                if(!(await this.userRepository.isUserAdmin(ticketDetails.assignedTo) || await this.userRepository.isUserEngineer(ticketDetails.assignedTo))){
+                    throw new BadRequestError("assignedTo email is not a valid engineer or admin");
+                }
+            }
+            const updateObject=areWeUpdatingAssignedTo?{...ticketDetails,updatedAt:new Date(),assignee:userEmail}:{...ticketDetails,updatedAt:new Date()};
+            const ticket=await this.ticketRepository.update(ticketId,updateObject as Partial<Prisma.TicketUpdateInput>);
+            return ticket;
+        } catch (error) {
+            if(error instanceof BadRequestError){
+                throw error;
+            }
+            console.log(error);
+            throw new InternalServerError();
+        }
     }
 
     async createTicket(ticketDetails:CreateTicketDto,userId:string):Promise<Ticket> {
@@ -26,9 +52,12 @@ export default class TicketService{
             await this.userRepository.addAssignedTicket(engineer.id,ticket.id);
             await this.userRepository.addCreatedTicket(createdBy.id,ticket.id);
             ticket.createdBy=createdBy?.email;
-            ticket=await this.ticketRepository.update(ticket.id,{createdBy:createdBy.email,assignedTo:engineer.id});
+            ticket=await this.ticketRepository.update(ticket.id,{createdBy:createdBy.email,assignedTo:engineer.email});
             return ticket;
         } catch (error) {
+            if(error instanceof BadRequestError){
+                throw error;
+            }
             console.log(error);
             throw error;
         }

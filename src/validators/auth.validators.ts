@@ -75,3 +75,26 @@ export function isEngineer(req: Request, res: Response, next: NextFunction) {
         })
     }
 }
+
+export function isAdminOrEngineer(req: Request, res: Response, next: NextFunction) {
+    try {
+        const roles: string[] = (req as RequestWithUser).user.role;
+        if (roles.find(role => role == 'ENGINEER' || role == 'ADMIN')) {
+            next();
+        } else {
+            return res.status(StatusCodes.UNAUTHORIZED).json({
+                err: new UnauthorizedError(),
+                data: {},
+                success: false,
+                message: "You're not a authorised to do this operation"
+            })
+        }
+    } catch (error) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            err: new UnauthorizedError(),
+            data: {},
+            success: false,
+            message: "You're not a authorised to do this operation"
+        })
+    }
+}

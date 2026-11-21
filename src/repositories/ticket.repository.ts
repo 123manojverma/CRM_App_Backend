@@ -1,43 +1,41 @@
 import type CreateTicketDto from "../dtos/createTicket.dto.js";
-import type { Ticket } from "../generated/prisma/client.js";
+import type { Prisma, Ticket } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 
-class TicketRepository{
-    async create(ticketDetails:CreateTicketDto):Promise<Ticket>{
-        const ticket=await prisma.ticket.create({
-            data:{
+class TicketRepository {
+    async create(ticketDetails: CreateTicketDto): Promise<Ticket> {
+        const ticket = await prisma.ticket.create({
+            data: {
                 ...ticketDetails
             }
         })
         return ticket;
     }
 
-    async get(ticketId:string):Promise<Ticket | null>{
-        const ticket=await prisma.ticket.findUnique({
-            where:{
-                id:ticketId
+    async get(ticketId: string): Promise<Ticket | null> {
+        const ticket = await prisma.ticket.findUnique({
+            where: {
+                id: ticketId
             }
         })
-        return ticket; 
+        return ticket;
     }
 
-    async getAll():Promise<Ticket[]>{
-        const tickets=await prisma.ticket.findMany();
+    async getAll(): Promise<Ticket[]> {
+        const tickets = await prisma.ticket.findMany();
         return tickets;
     }
 
-    async delete(){
+    async delete() {
 
     }
 
-    async update(id:string,updateDetails:{createdBy?:string,assignedTo:string}):Promise<Ticket>{
-        const ticket=await prisma.ticket.update({
-            where:{
+    async update(id: string, updateDetails: Partial<Prisma.TicketUpdateInput>): Promise<Ticket> {
+        const ticket = await prisma.ticket.update({
+            where: {
                 id
             },
-            data:{
-                ...updateDetails
-            }
+            data: updateDetails
         })
         return ticket;
     }

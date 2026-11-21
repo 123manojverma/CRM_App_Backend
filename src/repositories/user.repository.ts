@@ -86,7 +86,7 @@ class UserRepository {
         return engineers;
     }
 
-    async getAvailableEngineer() : Promise<Engineer> {
+    async getAvailableEngineer(): Promise<Engineer> {
         const response = await prisma.user.aggregateRaw({
             pipeline: [
                 {
@@ -100,13 +100,13 @@ class UserRepository {
                     $project: {
                         id: 1,
                         email: 1,
-                        ticketsAssignedCount: { 
+                        ticketsAssignedCount: {
                             $cond: {
                                 if: { $isArray: "$ticketsAssigned" },
                                 then: { $size: "$ticketsAssigned" },
                                 else: 0
                             }
-                         } // include a new field in every doc
+                        } // include a new field in every doc
                     }
                 },
                 {
@@ -122,8 +122,8 @@ class UserRepository {
         console.log(response);
 
         console.log(typeof response[0] === 'object', (response[0] as JsonObject)._id, (response[0] as JsonObject).email, (response[0] as JsonObject).ticketsAssignedCount)
-        if(typeof response[0] === 'object' && (response[0] as JsonObject)._id && (response[0] as JsonObject).email && (response[0] as JsonObject).ticketsAssignedCount) {
-            const idObject = ((response[0] as JsonObject)._id as {'$oid': string});
+        if (typeof response[0] === 'object' && (response[0] as JsonObject)._id && (response[0] as JsonObject).email && (response[0] as JsonObject).ticketsAssignedCount) {
+            const idObject = ((response[0] as JsonObject)._id as { '$oid': string });
             // _id: {'$oid' : 'asdfa' }
             const engineer: Engineer = {
                 id: idObject['$oid'],
@@ -136,6 +136,25 @@ class UserRepository {
         throw new NotFoundError("User", "role", "Engineer");
     }
 
+    async isUserEngineer(userEmail: string): Promise<boolean> {
+        const user = await prisma.user.findUnique({
+            where: {
+                email: userEmail
+            }
+        })
+        if(!user) return false;
+        return user?.roles.includes("ENGINEER");
+    }
+
+    async isUserAdmin(userEmail: string): Promise<boolean> {
+        const user = await prisma.user.findUnique({
+            where: {
+                email: userEmail
+            }
+        })
+        if(!user) return false;
+        return user?.roles.includes("ADMIN");
+    }
 }
 
 export default UserRepository;
