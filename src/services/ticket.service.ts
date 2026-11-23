@@ -4,17 +4,21 @@ import BadRequestError from "../errors/badRequest.js";
 import InternalServerError from "../errors/internalServerError.js";
 import NotFoundError from "../errors/notFound.js";
 import type { Prisma, Ticket, User } from "../generated/prisma/client.js";
+import { ticketCreated } from "../mailers/ticket.mailer.js";
 import type TicketRepository from "../repositories/ticket.repository.js";
 import type UserRepository from "../repositories/user.repository.js";
 import type Engineer from "../types/engineer.js";
+import { MailerService } from "./mailing.service.js";
 
 export default class TicketService{
     private ticketRepository:TicketRepository;
     private userRepository:UserRepository;
+    private mailer:MailerService
 
     constructor(ticketRepository:TicketRepository,userRepository:UserRepository){
         this.ticketRepository=ticketRepository;
         this.userRepository=userRepository;
+        this.mailer=new MailerService();
     }
 
     async updateTicket(ticketId:string,ticketDetails:UpdateTicketDto,userEmail:string){
@@ -53,6 +57,7 @@ export default class TicketService{
             await this.userRepository.addCreatedTicket(createdBy.id,ticket.id);
             ticket.createdBy=createdBy?.email;
             ticket=await this.ticketRepository.update(ticket.id,{createdBy:createdBy.email,assignedTo:engineer.email});
+            this.mailer.sendEmail(createdBy.email,`Successfully created your ticket ${ticket.id}`,ticketCreated(ticket.id));
             return ticket;
         } catch (error) {
             if(error instanceof BadRequestError){
